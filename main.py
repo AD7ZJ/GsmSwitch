@@ -3,17 +3,19 @@ import serial,time,re   # Importing required modules
 import RPi.GPIO as GPIO
 import signal
 import sys
+from systime import SetSystemTime
 
-#stup GPIO
+# global vars
 switch1 = 26
 switch2 = 23
+timeSet = False
+
+#setup GPIO
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(switch1, GPIO.OUT)
 
 #setup serial port to talk to SIM900
 port = serial.Serial(baudrate=19200, port='/dev/ttyAMA0', timeout=5) # Serial port initialization
-#port.open()
-allow=["+919966228935","+919705896317"] # Add allowed Numbers here
 
 # setup SIM900
 port.write('AT+CMGF=1\r\n')              # set text mode
@@ -61,6 +63,7 @@ def SendSms(msg, phoneNumber="+19286427892"):
     port.write('\x1A')
     WaitResponse('OK')
 
+
 #def ProcessCmd(cmd):
     
 
@@ -69,7 +72,7 @@ while 1: # For Infinite execution
     line = port.readline() # Reading Serialport response line by line
 
     # a txt message will look like +CMT: "+19286427892","","14/11/19,00:37:33-28"
-    if(line.startswith("+CMT:")): # Condition for new incoming message
+    if(line.startswith("+CMT:")):
         #                        number     ""      day   month  year   hour  min     sec
         m = re.search('\+CMT\: \"(\+\d+)\",(.*?),\"(\d+)\/(\d+)\/(\d+),(\d+)\:(\d+)\:(\d+).*', line)
         phoneNumber = m.group(1)
@@ -80,7 +83,9 @@ while 1: # For Infinite execution
         hour = int(m.group(6))
         minute = int(m.group(7))
         sec = int(m.group(8))
-
+        
+        if (not timeSet):
+            SetSystemTime(hour, minute, sec, day, month, year)
 
         # Read the text message
         line = port.readline()
