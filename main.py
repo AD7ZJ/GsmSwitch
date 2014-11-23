@@ -64,12 +64,20 @@ def SendSms(msg, phoneNumber="+19286427892"):
     WaitResponse('OK')
 
 
-#def ProcessCmd(cmd):
+def ProcessCmd(command, phoneNumber):
+    m = re.search('^(\w+)', command)
+    command = m.group(1)
     
+    if (command.lower() == "on"):
+        SetSwitch1(True)
+        SendSms('Turned switch1 on', phoneNumber)
+    elif (command.lower() == "off"):
+        SetSwitch1(False)
+        SendSms('Turned switch1 off', phoneNumber)
 
 
 while 1: # For Infinite execution
-    line = port.readline() # Reading Serialport response line by line
+    line = port.readline() # Check for incoming serial messages
 
     # a txt message will look like +CMT: "+19286427892","","14/11/19,00:37:33-28"
     if(line.startswith("+CMT:")):
@@ -90,8 +98,8 @@ while 1: # For Infinite execution
         # Read the text message
         line = port.readline()
         print "The message is: %s" % line
+        ProcessCmd(line, phoneNumber)
         print "From %s on: %d/%d/%d on %d:%d:%d" % (phoneNumber, day, month, year, hour, minute, sec)
-        time.sleep(1)
-        reply = "Received at %d:%d:%d on %d/%d/%d" % (hour, minute, sec, month, day, year)
-        SendSms(msg=reply, phoneNumber=phoneNumber)
+#        reply = "Received at %d:%d:%d on %d/%d/%d" % (hour, minute, sec, month, day, year)
+#        SendSms(msg=reply, phoneNumber=phoneNumber)
 
