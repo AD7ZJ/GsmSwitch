@@ -116,8 +116,8 @@ while 1: # For Infinite execution
         minute = int(m.group(7))
         sec = int(m.group(8))
         
-        #if (not timeSet):
-        #    SetSystemTime(hour, minute, sec, day, month, year)
+        if (not timeSet):
+            SetSystemTime(hour, minute, sec, day, month, year)
 
         # Read the text message
         line = port.readline()

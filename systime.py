@@ -1,6 +1,8 @@
 import sys
 import datetime
 
+gmt_offset = 7
+
 def SetSystemTime(hour, minute, second, day, month, year):
     time_tuple = ( year, month, day, hour, minute, second, 0)
     _linux_set_time(time_tuple)
@@ -30,7 +32,7 @@ def _linux_set_time(time_tuple):
     librt = ctypes.CDLL(ctypes.util.find_library("rt"))
 
     ts = timespec()
-    ts.tv_sec = int( time.mktime( datetime.datetime( *time_tuple[:6]).timetuple() ) )
+    ts.tv_sec = int( time.mktime( datetime.datetime( *time_tuple[:6]).timetuple() ) ) + (gmt_offset * 3600)
     ts.tv_nsec = time_tuple[6] * 1000000 # Millisecond to nanosecond
 
     # http://linux.die.net/man/3/clock_settime
