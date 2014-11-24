@@ -9,6 +9,8 @@ from systime import SetSystemTime
 switch1 = 26
 switch2 = 23
 timeSet = False
+startTime = [0, 0]
+stopTime = [0, 0]
 
 #setup GPIO
 GPIO.setmode(GPIO.BOARD)
@@ -66,14 +68,36 @@ def SendSms(msg, phoneNumber="+19286427892"):
 
 def ProcessCmd(command, phoneNumber):
     m = re.search('^(\w+)', command)
-    command = m.group(1)
-    
-    if (command.lower() == "on"):
+    cmd = m.group(1)
+
+    if (cmd.lower() == "on"):
+        m = re.search('^(\w+)\s+(\d+)\s+$', command)
+        if (m != None):
+            durInMins = int(m.group(2))
+            startTime[0] = time.time()
+            stopTime[0] = time.time() + (60 * durInMins)
+            SendSms("OK, turning sw1 on now for %d minutes" % durInMins, phoneNumber)
+        else:
+            m = re.search('^(\w+)\s+(\d+)\:(\d+)\s+(\d+)\s+$', command)
+            if (m != None):
+                startHr = int(m.group(2))
+                startMin = int(m.group(3))
+                durInMins = int(m.group(4))
+                SendSms("Ok, sw1 will turn on at %02d:%02d for %d minutes" % (startHr, startMin, durInMins), phoneNumber)
+            else:
+                # Unrecognized msg
+                SendSms('Unknown Command', phoneNumber)
+    elif (cmd.lower() == "off"):
+        print "off"
+        startTime[0] = 0
+        stopTime[0] = 0
+
+
+def UpdateSwitches():
+    if (time.time() > startTime[0] and time.time() < stopTime[0]):
         SetSwitch1(True)
-        SendSms('Turned switch1 on', phoneNumber)
-    elif (command.lower() == "off"):
+    else:
         SetSwitch1(False)
-        SendSms('Turned switch1 off', phoneNumber)
 
 
 while 1: # For Infinite execution
@@ -92,14 +116,13 @@ while 1: # For Infinite execution
         minute = int(m.group(7))
         sec = int(m.group(8))
         
-        if (not timeSet):
-            SetSystemTime(hour, minute, sec, day, month, year)
+        #if (not timeSet):
+        #    SetSystemTime(hour, minute, sec, day, month, year)
 
         # Read the text message
         line = port.readline()
         print "The message is: %s" % line
         ProcessCmd(line, phoneNumber)
         print "From %s on: %d/%d/%d on %d:%d:%d" % (phoneNumber, day, month, year, hour, minute, sec)
-#        reply = "Received at %d:%d:%d on %d/%d/%d" % (hour, minute, sec, month, day, year)
-#        SendSms(msg=reply, phoneNumber=phoneNumber)
 
+    UpdateSwitches()
