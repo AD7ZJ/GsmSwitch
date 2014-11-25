@@ -3,6 +3,7 @@ import serial,time,re   # Importing required modules
 import RPi.GPIO as GPIO
 import signal
 import sys
+import datetime
 from systime import SetSystemTime
 
 # global vars
@@ -11,6 +12,7 @@ switch2 = 23
 timeSet = False
 startTime = [0, 0]
 stopTime = [0, 0]
+gmtOffset = -7
 
 #setup GPIO
 GPIO.setmode(GPIO.BOARD)
@@ -80,9 +82,16 @@ def ProcessCmd(command, phoneNumber):
         else:
             m = re.search('^(\w+)\s+(\d+)\:(\d+)\s+(\d+)\s+$', command)
             if (m != None):
+                year = int(time.strftime('%Y'))
+                month = int(time.strftime('%m'))
+                day = int(time.strftime('%d'))
                 startHr = int(m.group(2))
                 startMin = int(m.group(3))
                 durInMins = int(m.group(4))
+                timeTuple = ( year, month, day, startHr, startMin, 0, 0)
+
+                startTime[0] = time.mktime(datetime.datetime( *timeTuple[:6]).timetuple())
+                stopTime[0] = startTime[0] + (durInMins * 60)
                 SendSms("Ok, sw1 will turn on at %02d:%02d for %d minutes" % (startHr, startMin, durInMins), phoneNumber)
             else:
                 # Unrecognized msg

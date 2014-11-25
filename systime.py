@@ -1,7 +1,7 @@
 import sys
 import datetime
 
-gmt_offset = 7
+gmt_offset = 0
 
 def SetSystemTime(hour, minute, second, day, month, year):
     time_tuple = ( year, month, day, hour, minute, second, 0)
