@@ -98,9 +98,12 @@ def ProcessCmd(command, phoneNumber):
                 SendSms('Unknown Command', phoneNumber)
     elif (cmd.lower() == "off"):
         print "off"
-        startTime[0] = 0
-        stopTime[0] = 0
-
+        if (startTime[0] != 0):
+            startTime[0] = 0
+            stopTime[0] = 0
+            SendSms("OK, turning sw1 off", phoneNumber)
+        else:
+            SendSms("sw1 is already off", phoneNumber)
 
 def UpdateSwitches():
     if (time.time() > startTime[0] and time.time() < stopTime[0]):
