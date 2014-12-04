@@ -9,6 +9,7 @@ from systime import SetSystemTime
 # global vars
 switch1 = 26
 switch2 = 23
+pwrKey  = 11
 timeSet = False
 startTime = [0, 0]
 stopTime = [0, 0]
@@ -17,18 +18,16 @@ gmtOffset = -7
 #setup GPIO
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(switch1, GPIO.OUT)
+GPIO.setup(switch2, GPIO.OUT)
+GPIO.setup(pwrKey, GPIO.OUT)
 
 #setup serial port to talk to SIM900
 port = serial.Serial(baudrate=19200, port='/dev/ttyAMA0', timeout=5) # Serial port initialization
 
-# setup SIM900
-port.write('AT+CMGF=1\r\n')              # set text mode
-port.write('AT+CNMI=2,2,0,0,0\r\n')      # Output texts asynchronously
-port.write('AT+CLTS=1\r\n')              # use network time to set internal clock
-
 # catch ctrl-c so we can cleanup the GPIO driver
 def sigHandler(signal, frame):
     print('Caught SIGINT, exiting...\n')
+    ModemPwrSwitch()
     GPIO.cleanup()
     sys.exit(0)
 
@@ -58,6 +57,16 @@ def SetSwitch2(state):
         GPIO.output(switch2, 1)
     else:
         GPIO.output(switch2, 0)
+
+
+def ModemPwrSwitch():
+    GPIO.output(pwrKey, 0)
+    time.sleep(1)
+    GPIO.output(pwrKey, 1)
+    time.sleep(2)
+    GPIO.output(pwrKey, 0)
+    # Give the modem time to boot up
+    time.sleep(10)
 
 
 def SendSms(msg, phoneNumber="+19286427892"):
@@ -110,6 +119,15 @@ def UpdateSwitches():
         SetSwitch1(True)
     else:
         SetSwitch1(False)
+
+
+# power up the SIM900
+ModemPwrSwitch()
+
+# setup SIM900
+port.write('AT+CMGF=1\r\n')              # set text mode
+port.write('AT+CNMI=2,2,0,0,0\r\n')      # Output texts asynchronously
+port.write('AT+CLTS=1\r\n')              # use network time to set internal clock
 
 
 while 1: # For Infinite execution
