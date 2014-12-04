@@ -82,43 +82,82 @@ def ProcessCmd(command, phoneNumber):
     cmd = m.group(1)
 
     if (cmd.lower() == "on"):
-        m = re.search('^(\w+)\s+(\d+)\s+$', command)
+        m = re.search('^(\w+)\s+(\d+)\s+(\d+)\s*$', command)
         if (m != None):
-            durInMins = int(m.group(2))
-            startTime[0] = time.time()
-            stopTime[0] = time.time() + (60 * durInMins)
-            SendSms("OK, turning sw1 on now for %d minutes" % durInMins, phoneNumber)
+            switch = int(m.group(2))
+            durInMins = int(m.group(3))
+            if (switch == 1):
+                startTime[0] = time.time()
+                stopTime[0] = time.time() + (60 * durInMins)
+                SendSms("OK, turning sw1 on now for %d minutes" % durInMins, phoneNumber)
+            elif (switch == 2):
+                startTime[1] = time.time()
+                stopTime[1] = time.time() + (60 * durInMins)
+                SendSms("OK, turning sw2 on now for %d minutes" % durInMins, phoneNumber)
+
         else:
-            m = re.search('^(\w+)\s+(\d+)\:(\d+)\s+(\d+)\s+$', command)
+            m = re.search('^(\w+)\s+(\d+)\s+(\d+)\:(\d+)\s+(\d+)\s*$', command)
             if (m != None):
                 year = int(time.strftime('%Y'))
                 month = int(time.strftime('%m'))
                 day = int(time.strftime('%d'))
-                startHr = int(m.group(2))
-                startMin = int(m.group(3))
-                durInMins = int(m.group(4))
+                switch = int(m.group(2))
+                startHr = int(m.group(3))
+                startMin = int(m.group(4))
+                durInMins = int(m.group(5))
                 timeTuple = ( year, month, day, startHr, startMin, 0, 0)
+                startTimeTemp = time.mktime(datetime.datetime( *timeTuple[:6]).timetuple())
+                stopTimeTemp = startTimeTemp + (durInMins * 60)
 
-                startTime[0] = time.mktime(datetime.datetime( *timeTuple[:6]).timetuple())
-                stopTime[0] = startTime[0] + (durInMins * 60)
-                SendSms("Ok, sw1 will turn on at %02d:%02d for %d minutes" % (startHr, startMin, durInMins), phoneNumber)
+                if (switch == 1):
+                    startTime[0] = startTimeTemp
+                    stopTime[0] = stopTimeTemp
+                    SendSms("Ok, sw1 will turn on at %02d:%02d for %d minutes" % (startHr, startMin, durInMins), phoneNumber)
+                elif (switch == 2):
+                    startTime[1] = startTimeTemp
+                    stopTime[1] = stopTimeTemp
+                    SendSms("Ok, sw2 will turn on at %02d:%02d for %d minutes" % (startHr, startMin, durInMins), phoneNumber)
+                else:
+                    SendSms("Err: Must specify a switch number", phoneNumber)
+
             else:
                 # Unrecognized msg
-                SendSms('Unknown Command', phoneNumber)
+                SendSms('Err: mangled command', phoneNumber)
+
     elif (cmd.lower() == "off"):
+        m = re.search('^(\w+)\s+(\d+)\s*$', command)
+        switch = int(m.group(2))
         print "off"
-        if (startTime[0] != 0):
-            startTime[0] = 0
-            stopTime[0] = 0
-            SendSms("OK, turning sw1 off", phoneNumber)
+
+        if (switch == 1):
+            if (startTime[0] != 0):
+                startTime[0] = 0
+                stopTime[0] = 0
+                SendSms("OK, turning sw1 off", phoneNumber)
+            else:
+                SendSms("sw1 is already off", phoneNumber)
+
+        elif (switch == 2):
+            if (startTime[1] != 0):
+                startTime[1] = 0
+                stopTime[1] = 0
+                SendSms("OK, turning sw2 off", phoneNumber)
+            else:
+                SendSms("sw2 is already off", phoneNumber)
+
         else:
-            SendSms("sw1 is already off", phoneNumber)
+            SendSms("Err: Must specify switch number", phoneNumber)
 
 def UpdateSwitches():
     if (time.time() > startTime[0] and time.time() < stopTime[0]):
         SetSwitch1(True)
     else:
         SetSwitch1(False)
+
+    if (time.time() > startTime[1] and time.time() < stopTime[1]):
+        SetSwitch2(True)
+    else:
+        SetSwitch2(False)
 
 
 # power up the SIM900
