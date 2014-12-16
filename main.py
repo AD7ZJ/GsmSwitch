@@ -86,6 +86,12 @@ def ProcessCmd(command, phoneNumber):
         if (m != None):
             switch = int(m.group(2))
             durInMins = int(m.group(3))
+
+            if (durInMins > 480):
+                durInMins = 480
+            if (durInMins < 0):
+                durInMins = 0
+
             if (switch == 1):
                 startTime[0] = time.time()
                 stopTime[0] = time.time() + (60 * durInMins)
@@ -105,6 +111,12 @@ def ProcessCmd(command, phoneNumber):
                 startHr = int(m.group(3))
                 startMin = int(m.group(4))
                 durInMins = int(m.group(5))
+
+                if (durInMins > 480):
+                    durInMins = 480
+                if (durInMins < 0):
+                    durInMins = 0
+
                 timeTuple = ( year, month, day, startHr, startMin, 0, 0)
                 startTimeTemp = time.mktime(datetime.datetime( *timeTuple[:6]).timetuple())
                 stopTimeTemp = startTimeTemp + (durInMins * 60)
@@ -126,27 +138,39 @@ def ProcessCmd(command, phoneNumber):
 
     elif (cmd.lower() == "off"):
         m = re.search('^(\w+)\s+(\d+)\s*$', command)
-        switch = int(m.group(2))
-        print "off"
+        if (m != None):
+            switch = int(m.group(2))
+            print "off"
 
-        if (switch == 1):
+            if (switch == 1):
+                if (startTime[0] != 0):
+                    startTime[0] = 0
+                    stopTime[0] = 0
+                    SendSms("OK, turning sw1 off", phoneNumber)
+                else:
+                    SendSms("sw1 is already off", phoneNumber)
+
+            elif (switch == 2):
+                if (startTime[1] != 0):
+                    startTime[1] = 0
+                    stopTime[1] = 0
+                    SendSms("OK, turning sw2 off", phoneNumber)
+                else:
+                    SendSms("sw2 is already off", phoneNumber)
+
+            else:
+                SendSms("Err: Must specify switch 1 or 2", phoneNumber)
+        else: 
             if (startTime[0] != 0):
                 startTime[0] = 0
                 stopTime[0] = 0
                 SendSms("OK, turning sw1 off", phoneNumber)
-            else:
-                SendSms("sw1 is already off", phoneNumber)
 
-        elif (switch == 2):
             if (startTime[1] != 0):
                 startTime[1] = 0
                 stopTime[1] = 0
                 SendSms("OK, turning sw2 off", phoneNumber)
-            else:
-                SendSms("sw2 is already off", phoneNumber)
 
-        else:
-            SendSms("Err: Must specify switch number", phoneNumber)
 
 def UpdateSwitches():
     if (time.time() > startTime[0] and time.time() < stopTime[0]):
