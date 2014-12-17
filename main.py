@@ -7,8 +7,8 @@ import datetime
 from systime import SetSystemTime
 
 # global vars
-switch1 = 26
-switch2 = 23
+switch1 = 24
+switch2 = 26
 pwrKey  = 11
 timeSet = False
 startTime = [0, 0]
