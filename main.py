@@ -189,8 +189,11 @@ ModemPwrSwitch()
 
 # setup SIM900
 port.write('AT+CMGF=1\r\n')              # set text mode
+WaitResponse('OK')
 port.write('AT+CNMI=2,2,0,0,0\r\n')      # Output texts asynchronously
+WaitResponse('OK')
 port.write('AT+CLTS=1\r\n')              # use network time to set internal clock
+WaitResponse('OK')
 
 
 while 1: # For Infinite execution
