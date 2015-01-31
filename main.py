@@ -3,6 +3,8 @@ import serial,time,re   # Importing required modules
 import RPi.GPIO as GPIO
 import signal
 import sys
+import os
+import glob
 import datetime
 from systime import SetSystemTime
 
@@ -14,6 +16,18 @@ timeSet = False
 startTime = [0, 0]
 stopTime = [0, 0]
 gmtOffset = -7
+
+
+sensorPresent = True
+try:
+    # device files for DS18B20 sensors always start with 28- and take the form of 28-0000061573fa
+    ds18b20DevBaseDir = '/sys/bus/w1/devices/'
+    ds18b20DevDir = glob.glob(ds18b20DevBaseDir + '28*')[0]
+    ds18b20Dev = ds18b20DevDir + '/w1_slave'
+except IndexError:
+    print "No sensor detected"
+    sensorPresent = False
+
 
 #setup GPIO
 GPIO.setmode(GPIO.BOARD)
@@ -75,6 +89,43 @@ def SendSms(msg, phoneNumber="+19286427892"):
     port.write(msg)
     port.write('\x1A')
     WaitResponse('OK')
+
+
+def DS18B20Init():
+    if (sensorPresent):
+        os.system('modprobe w1-gpio')
+        os.system('modprobe w1-therm')
+
+
+def DS18B20ReadRaw():
+    if (sensorPresent):
+        f = open(ds18b20Dev, 'r')
+        lines = f.readlines()
+        f.close()
+        return lines
+
+def GetTemp():
+    if (sensorPresent):
+        readTries = 0;
+        # the output from the tempsensor looks like this:
+        # f6 01 4b 46 7f ff 0a 10 eb : crc=eb YES
+        # f6 01 4b 46 7f ff 0a 10 eb t=31375
+
+        lines = DS18B20ReadRaw()
+        while (lines[0].strip()[-3:] != 'YES' and readTries < 10):
+            time.sleep(0.2)
+            lines = DS18B20ReadRaw()
+            readTries = readTries + 1
+
+        equals_pos = lines[1].find('t=')
+
+        if equals_pos != -1:
+            temp_string = lines[1][equals_pos+2:]
+            temp_c = float(temp_string) / 1000.0
+            temp_f = temp_c * 9.0 / 5.0 + 32.0
+            return temp_c, temp_f
+    else:
+        return -99,-99
 
 
 def ProcessCmd(command, phoneNumber):
@@ -171,6 +222,21 @@ def ProcessCmd(command, phoneNumber):
                 stopTime[1] = 0
                 SendSms("OK, turning sw2 off", phoneNumber)
 
+    elif (cmd.lower() == "temp"):
+        tempC, tempF = GetTemp()
+        SendSms("Current temp is %.2fF, %.2fC" % (tempF, tempC), phoneNumber)
+
+    elif (cmd.lower() == "status"):
+        sw1Stat = "Nothing scheduled for sw1. "
+        sw2Stat = "Nothing scheduled for sw2. "
+        now = time.time()
+        
+        if (now < startTime[0]):
+            sw1Stat = "Sw1 is scheduled to turn on in %.1f hrs for %d mins. " % (((startTime[0] - now) / 3600), (stopTime[0] - startTime[0]) / 60)
+        elif (now > startTime[0] and now < stopTime[0]):
+            sw1Stat = "Sw1 is currently on for %d more minutes. " % ((stopTime[0] - startTime[0]) / 60)
+
+        SendSms(sw1Stat + sw2Stat, phoneNumber)
 
 def UpdateSwitches():
     if (time.time() > startTime[0] and time.time() < stopTime[0]):
@@ -183,6 +249,10 @@ def UpdateSwitches():
     else:
         SetSwitch2(False)
 
+
+
+# enable the temperature sensor
+DS18B20Init()
 
 # power up the SIM900
 ModemPwrSwitch()
