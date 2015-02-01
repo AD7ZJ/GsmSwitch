@@ -20,14 +20,7 @@ gmtOffset = -7
 
 
 sensorPresent = True
-try:
-    # device files for DS18B20 sensors always start with 28- and take the form of 28-0000061573fa
-    ds18b20DevBaseDir = '/sys/bus/w1/devices/'
-    ds18b20DevDir = glob.glob(ds18b20DevBaseDir + '28*')[0]
-    ds18b20Dev = ds18b20DevDir + '/w1_slave'
-except IndexError:
-    print "No sensor detected"
-    sensorPresent = False
+ds18b20Dev = ''
 
 
 #setup GPIO
@@ -93,9 +86,21 @@ def SendSms(msg, phoneNumber="+19286427892"):
 
 
 def DS18B20Init():
-    if (sensorPresent):
+    global ds18b20Dev
+    try:
         os.system('modprobe w1-gpio')
         os.system('modprobe w1-therm')
+
+        # give the driver time to scan the bus
+        time.sleep(1)
+
+        # device files for DS18B20 sensors always start with 28- and take the form of 28-0000061573fa
+        ds18b20DevBaseDir = '/sys/bus/w1/devices/'
+        ds18b20DevDir = glob.glob(ds18b20DevBaseDir + '28*')[0]
+        ds18b20Dev = ds18b20DevDir + '/w1_slave'
+    except IndexError:
+        print "No sensor detected"
+        sensorPresent = False
 
 
 def DS18B20ReadRaw():
@@ -247,6 +252,12 @@ def ProcessCmd(command, phoneNumber):
             sw1Stat = "Sw1 is scheduled to turn on in %.1f hrs for %d mins. " % (((startTime[0] - now) / 3600), (stopTime[0] - startTime[0]) / 60)
         elif (now > startTime[0] and now < stopTime[0]):
             sw1Stat = "Sw1 is currently on for %d more minutes. " % ((stopTime[0] - startTime[0]) / 60)
+
+        if (now < startTime[1]):
+            sw2Stat = "Sw2 is scheduled to turn on in %.1f hrs for %d mins. " % (((startTime[1] - now) / 3600), (stopTime[1] - startTime[1]) / 60)
+        elif (now > startTime[1] and now < stopTime[1]):
+            sw2Stat = "Sw2 is currently on for %d more minutes. " % ((stopTime[1] - startTime[1]) / 60)
+
 
         SendSms(sw1Stat + sw2Stat, phoneNumber)
 
