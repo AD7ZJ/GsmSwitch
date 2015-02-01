@@ -6,6 +6,7 @@ import sys
 import os
 import glob
 import datetime
+import subprocess
 from systime import SetSystemTime
 
 # global vars
@@ -128,6 +129,17 @@ def GetTemp():
         return -99,-99
 
 
+def GetCPUTemp():
+    try:
+        cpuTempFile = '/sys/class/thermal/thermal_zone0/temp'
+        f = open(cpuTempFile, 'r')
+        lines = f.readlines()
+        f.close()
+        return float(lines[0]) / 1000
+    except ValueError:
+        return -99
+
+
 def ProcessCmd(command, phoneNumber):
     m = re.search('^(\w+)', command)
     cmd = m.group(1)
@@ -238,6 +250,14 @@ def ProcessCmd(command, phoneNumber):
 
         SendSms(sw1Stat + sw2Stat, phoneNumber)
 
+    elif (cmd.lower() == "system"):
+        tempC = GetCPUTemp()
+        sysStatus = time.strftime("%m/%d/%Y ")
+        sysStatus += subprocess.check_output('uptime')
+        sysStatus += "CPU Temp: %.2f " % tempC
+ 
+        SendSms(sysStatus, phoneNumber)
+
 def UpdateSwitches():
     if (time.time() > startTime[0] and time.time() < stopTime[0]):
         SetSwitch1(True)
@@ -271,19 +291,23 @@ while 1: # For Infinite execution
 
     # a txt message will look like +CMT: "+19286427892","","14/11/19,00:37:33-28"
     if(line.startswith("+CMT:")):
-        #                        number     ""      day   month  year   hour  min     sec
-        m = re.search('\+CMT\: \"(\+\d+)\",(.*?),\"(\d+)\/(\d+)\/(\d+),(\d+)\:(\d+)\:(\d+).*', line)
-        phoneNumber = m.group(1)
+        try:
+            #                        number     ""      day   month  year   hour  min     sec
+            m = re.search('\+CMT\: \"(\+\d+)\",(.*?),\"(\d+)\/(\d+)\/(\d+),(\d+)\:(\d+)\:(\d+).*', line)
+            phoneNumber = m.group(1)
 
-        day = int(m.group(5))
-        month = int(m.group(4))
-        year = int(m.group(3))
-        hour = int(m.group(6))
-        minute = int(m.group(7))
-        sec = int(m.group(8))
+            day = int(m.group(5))
+            month = int(m.group(4))
+            year = int(m.group(3))
+            hour = int(m.group(6))
+            minute = int(m.group(7))
+            sec = int(m.group(8))
         
-        if (not timeSet):
-            SetSystemTime(hour, minute, sec, day, month, year)
+            if (not timeSet):
+                SetSystemTime(hour, minute, sec, day, month, year)
+
+        except:
+            print "Malformed message: " + line + "\n"
 
         # Read the text message
         line = port.readline()
