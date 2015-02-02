@@ -53,6 +53,17 @@ def WaitResponse(msg):
     print "Got: " + resp
 
 
+def WaitReturnResponse(msg):
+    startTime = time.time()
+    resp = port.readline()
+    while (resp.find(msg) < 0):
+        if (time.time() - startTime > 8):
+            print "timed out :(\r\n"
+            break
+        resp = port.readline()
+    return resp
+
+
 def SetSwitch1(state):
     if (state):
         GPIO.output(switch1, 1)
@@ -74,7 +85,7 @@ def ModemPwrSwitch():
     time.sleep(2)
     GPIO.output(pwrKey, 0)
     # Give the modem time to boot up
-    time.sleep(10)
+    time.sleep(5)
 
 
 def SendSms(msg, phoneNumber="+19286427892"):
@@ -83,6 +94,35 @@ def SendSms(msg, phoneNumber="+19286427892"):
     port.write(msg)
     port.write('\x1A')
     WaitResponse('OK')
+
+
+def GetSigStatus():
+    port.write("AT+CSQ\r\n")
+    msg = WaitReturnResponse('+CSQ:')
+    WaitResponse('OK')
+
+    m = re.search('^\+CSQ\:\s+(\d+)\,\s*(\d+)\s*$', msg)
+
+    if (m != None):
+        rssi = int(m.group(1))
+        ber = int(m.group(2))
+    else:
+        rssi = 99
+        ber = 99
+
+    rssiDbm = 0
+
+    # decode RSSI to dBm
+    if (rssi == 0):
+        rssiDbm = -115
+    elif (rssi == 1):
+        rssiDbm = -111
+    elif (rssi > 1 and rssi < 31):
+        rssiDbm = (2 * rssi) - 114
+    elif (rssi > 30):
+        rssiDbm = -52
+
+    return rssiDbm, ber
 
 
 def DS18B20Init():
@@ -268,6 +308,11 @@ def ProcessCmd(command, phoneNumber):
         sysStatus += "CPU Temp: %.2f " % tempC
  
         SendSms(sysStatus, phoneNumber)
+
+    elif (cmd.lower() == "rssi"):
+        rssi, ber = GetSigStatus()
+        SendSms("RSSI: %d dBm, BER: %d" % (rssi, ber), phoneNumber)
+
 
 def UpdateSwitches():
     if (time.time() > startTime[0] and time.time() < stopTime[0]):
