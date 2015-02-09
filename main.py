@@ -212,21 +212,27 @@ def ProcessCmd(command, phoneNumber):
         else:
             m = re.search('^(\w+)\s+(\d+)\s+(\d+)\:(\d+)\s+(\d+)\s*$', command)
             if (m != None):
-                year = int(time.strftime('%Y'))
-                month = int(time.strftime('%m'))
-                day = int(time.strftime('%d'))
+                curHr = int(time.strftime('%H'))
+                curMin = int(time.strftime('%M'))
                 switch = int(m.group(2))
                 startHr = int(m.group(3))
                 startMin = int(m.group(4))
                 durInMins = int(m.group(5))
+
+                # calculate secs since midnight
+                curSecsSinceMidnight = (curHr * 3600) + (curMin * 60)
+                startSecsSinceMidnight = (startHr * 3600) + (startMin * 60)
+
+                if (startSecsSinceMidnight < curSecsSinceMidnight):
+                    startTimeTemp = time.time() + startSecsSinceMidnight + (86400 - curSecsSinceMidnight)
+                else:
+                    startTimeTemp = time.time() + (startSecsSinceMidnight - curSecsSinceMidnight)
 
                 if (durInMins > 480):
                     durInMins = 480
                 if (durInMins < 0):
                     durInMins = 0
 
-                timeTuple = ( year, month, day, startHr, startMin, 0, 0)
-                startTimeTemp = time.mktime(datetime.datetime( *timeTuple[:6]).timetuple())
                 stopTimeTemp = startTimeTemp + (durInMins * 60)
 
                 if (switch == 1):
@@ -291,12 +297,12 @@ def ProcessCmd(command, phoneNumber):
         if (now < startTime[0]):
             sw1Stat = "Sw1 is scheduled to turn on in %.1f hrs for %d mins. " % (((startTime[0] - now) / 3600), (stopTime[0] - startTime[0]) / 60)
         elif (now > startTime[0] and now < stopTime[0]):
-            sw1Stat = "Sw1 is currently on for %d more minutes. " % ((stopTime[0] - startTime[0]) / 60)
+            sw1Stat = "Sw1 is currently on for %d more minutes. " % ((stopTime[0] - now) / 60)
 
         if (now < startTime[1]):
             sw2Stat = "Sw2 is scheduled to turn on in %.1f hrs for %d mins. " % (((startTime[1] - now) / 3600), (stopTime[1] - startTime[1]) / 60)
         elif (now > startTime[1] and now < stopTime[1]):
-            sw2Stat = "Sw2 is currently on for %d more minutes. " % ((stopTime[1] - startTime[1]) / 60)
+            sw2Stat = "Sw2 is currently on for %d more minutes. " % ((stopTime[1] - now) / 60)
 
 
         SendSms(sw1Stat + sw2Stat, phoneNumber)
