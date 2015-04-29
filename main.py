@@ -351,9 +351,10 @@ WaitResponse('OK')
 while 1: # For Infinite execution
     line = port.readline() # Check for incoming serial messages
 
-    # a txt message will look like +CMT: "+19286427892","","14/11/19,00:37:33-28"
-    if(line.startswith("+CMT:")):
-        try:
+    try:
+        # a txt message will look like +CMT: "+19286427892","","14/11/19,00:37:33-28"
+        if(line.startswith("+CMT:")):
+
             #                        number     ""      day   month  year   hour  min     sec
             m = re.search('\+CMT\: \"(\+\d+)\",(.*?),\"(\d+)\/(\d+)\/(\d+),(\d+)\:(\d+)\:(\d+).*', line)
             phoneNumber = m.group(1)
@@ -368,13 +369,15 @@ while 1: # For Infinite execution
             if (not timeSet):
                 SetSystemTime(hour, minute, sec, day, month, year)
 
-        except:
-            print "Malformed message: " + line + "\n"
+
 
         # Read the text message
         line = port.readline()
         print "The message is: %s" % line
         ProcessCmd(line, phoneNumber)
         print "From %s on: %d/%d/%d on %d:%d:%d" % (phoneNumber, day, month, year, hour, minute, sec)
+
+    except:
+        print "Malformed message: " + line + "\n"
 
     UpdateSwitches()
