@@ -379,4 +379,5 @@ while 1: # For Infinite execution
             print "From %s on: %d/%d/%d on %d:%d:%d" % (phoneNumber, day, month, year, hour, minute, sec)
         except:
             print "Invalid text msg"
+
     UpdateSwitches()
