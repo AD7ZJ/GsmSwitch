@@ -371,10 +371,12 @@ while 1: # For Infinite execution
         except:
             print "Malformed message: " + line + "\n"
 
-        # Read the text message
-        line = port.readline()
-        print "The message is: %s" % line
-        ProcessCmd(line, phoneNumber)
-        print "From %s on: %d/%d/%d on %d:%d:%d" % (phoneNumber, day, month, year, hour, minute, sec)
-
+        try:
+            # Read the text message
+            line = port.readline()
+            print "The message is: %s" % line
+            ProcessCmd(line, phoneNumber)
+            print "From %s on: %d/%d/%d on %d:%d:%d" % (phoneNumber, day, month, year, hour, minute, sec)
+        except:
+            print "Invalid text msg"
     UpdateSwitches()
