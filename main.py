@@ -7,6 +7,7 @@ import os
 import glob
 import datetime
 import subprocess
+import string
 from systime import SetSystemTime
 
 # global vars
@@ -350,7 +351,6 @@ WaitResponse('OK')
 
 while 1: # For Infinite execution
     line = port.readline() # Check for incoming serial messages
-
     # a txt message will look like +CMT: "+19286427892","","14/11/19,00:37:33-28"
     if(line.startswith("+CMT:")):
         try:
@@ -372,12 +372,19 @@ while 1: # For Infinite execution
             print "Malformed message: " + line + "\n"
 
         try:
-            # Read the text message
+            # Read the text message.
             line = port.readline()
-            print "The message is: %s" % line
+            # check for UCS2 encoding. Not super robust but should work for the messages we expect in this application.
+            if(re.match('^([0-9A-F]{4}){4,}', line)): # a UCS2 message looks like this: 004F006E00200032002000310030
+                tmp =  bytearray.fromhex(line.rstrip()).decode()
+                # throw away non-printing characters
+                printable = set(string.printable)
+                line = filter(lambda x: x in printable, tmp)
+            
             ProcessCmd(line, phoneNumber)
             print "From %s on: %d/%d/%d on %d:%d:%d" % (phoneNumber, day, month, year, hour, minute, sec)
-        except:
-            print "Invalid text msg"
+        except Exception as e:
+            print "Invalid text msg: " + line
+            print(e)
 
     UpdateSwitches()
