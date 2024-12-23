@@ -175,19 +175,19 @@ class GsmSwitch:
             self.SendSms(f"Current temp is {tempF:.2f}F, {tempC:.2f}C", phoneNumber)
 
         elif cmd.lower() == "status":
-            sw1Stat = "Nothing scheduled for sw1."
-            sw2Stat = "Nothing scheduled for sw2."
+            sw1Stat = "Nothing scheduled for sw1. "
+            sw2Stat = "Nothing scheduled for sw2. "
             now = timeNow
             
             if now < self.startTime[0]:
-                sw1Stat = f"Sw1 is scheduled to turn on in {((self.startTime[0] - now) / 3600):.1f} hrs for {((self.stopTime[0] - self.startTime[0]) / 60):d} mins. "
+                sw1Stat = f"Sw1 is scheduled to turn on in {((self.startTime[0] - now) / 3600):.1f} hrs for {((self.stopTime[0] - self.startTime[0]) / 60):.0f} mins. "
             elif now > self.startTime[0] and now < self.stopTime[0]:
-                sw1Stat = f"Sw1 is currently on for {((self.stopTime[0] - now) / 60):d} more minutes. "
+                sw1Stat = f"Sw1 is currently on for {((self.stopTime[0] - now) / 60):.0f} more minutes. "
 
             if now < self.startTime[1]:
-                sw2Stat = f"Sw2 is scheduled to turn on in {((self.startTime[1] - now) / 3600):.1f} hrs for {((self.stopTime[1] - self.startTime[1]) / 60):d} mins. "
+                sw2Stat = f"Sw2 is scheduled to turn on in {((self.startTime[1] - now) / 3600):.1f} hrs for {((self.stopTime[1] - self.startTime[1]) / 60):.0f} mins. "
             elif now > self.startTime[1] and now < self.stopTime[1]:
-                sw2Stat = f"Sw2 is currently on for {((self.stopTime[1] - now) / 60):d} more minutes. "
+                sw2Stat = f"Sw2 is currently on for {((self.stopTime[1] - now) / 60):.0f} more minutes. "
 
             self.SendSms(sw1Stat + sw2Stat, phoneNumber)
 
@@ -195,7 +195,7 @@ class GsmSwitch:
             tempC = self.io.GetCPUTemp()
             sysStatus = time.strftime("%m/%d/%Y ", time.gmtime(timeNow + (self.gmtOffset*3600)))
             sysStatus += subprocess.check_output('uptime', shell=True).decode('utf-8')
-            sysStatus += f"CPU Temp: {tempC:.2f} "
+            sysStatus += f"CPU Temp: {tempC:.1f} "
 
             self.SendSms(sysStatus, phoneNumber)
 
