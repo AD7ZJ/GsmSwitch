@@ -2,7 +2,6 @@
 import serial
 import time
 import re
-import RPi.GPIO as GPIO
 import signal
 import sys
 import os
@@ -10,16 +9,14 @@ import glob
 import datetime
 import subprocess
 import string
-from systime import SetSystemTime
+from hardware import HwInterface
+
 
 # global vars
 switch1 = 24
 switch2 = 26
-pwrKey  = 11
-timeSet = False
 startTime = [0, 0]
 stopTime = [0, 0]
-gmtOffset = -7
 
 sensorPresent = True
 ds18b20Dev = ''
@@ -28,7 +25,6 @@ ds18b20Dev = ''
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(switch1, GPIO.OUT)
 GPIO.setup(switch2, GPIO.OUT)
-GPIO.setup(pwrKey, GPIO.OUT)
 
 # setup serial port to talk to SIM900
 port = serial.Serial(baudrate=115200, port='/dev/ttyAMA0', timeout=5)  # Serial port initialization
@@ -321,9 +317,6 @@ def Run():
                 hour = int(m.group(6))
                 minute = int(m.group(7))
                 sec = int(m.group(8))
-            
-                if not timeSet:
-                    SetSystemTime(hour, minute, sec, day, month, year)
 
             except Exception as e:
                 print(f"Malformed message: {line}\n")
