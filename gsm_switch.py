@@ -25,7 +25,7 @@ class GsmSwitch:
     def WaitResponse(self, msg):
         startTime = time.time()
         resp = self.io.readline()
-        while msg not in resp.decode():
+        while msg not in resp:
             print(f"Waiting... {resp}\r\n")
             if time.time() - startTime > 8:
                 print("timed out :(\r\n")
@@ -36,7 +36,7 @@ class GsmSwitch:
     def WaitReturnResponse(self, msg):
         startTime = time.time()
         resp = self.io.readline()
-        while msg not in resp.decode():
+        while msg not in resp:
             if time.time() - startTime > 8:
                 print("timed out :(\r\n")
                 break
@@ -44,18 +44,18 @@ class GsmSwitch:
         return resp
 
     def SendSms(self, msg, phoneNumber="+19286427892"):
-        self.io.write(f"AT+CMGS=\"{phoneNumber}\"\r\n".encode())
+        self.io.write(f"AT+CMGS=\"{phoneNumber}\"\r\n")
         self.WaitResponse('>')
-        self.io.write(msg.encode())
-        self.io.write(b'\x1A')
+        self.io.write(msg)
+        self.io.write('\x1A')
         self.WaitResponse('OK')
 
     def GetSigStatus(self):
-        self.io.write("AT+CSQ\r\n".encode())
+        self.io.write("AT+CSQ\r\n")
         msg = self.WaitReturnResponse('+CSQ:')
         self.WaitResponse('OK')
 
-        m = re.search(r'^\+CSQ\:\s+(\d+)\,\s*(\d+)\s*$', msg.decode())
+        m = re.search(r'^\+CSQ\:\s+(\d+)\,\s*(\d+)\s*$', msg)
 
         if m:
             rssi = int(m.group(1))
@@ -214,41 +214,38 @@ class GsmSwitch:
         else:
             self.io.SetSwitch2(False)
 
-    def Run(self):
-        while True:  # For Infinite execution
-            line = self.io.readline()  # Check for incoming serial messages
-            # a txt message will look like +CMT: "+19286427892","","14/11/19,00:37:33-28"
-            if line.startswith(b"+CMT:"):
-                try:
-                    #                        number     ""      day   month  year   hour  min     sec
-                    m = re.search(r'\+CMT\: \"(\+\d+)\",(.*?),\"(\d+)\/(\d+)\/(\d+),(\d+)\:(\d+)\:(\d+).*', line)
-                    phoneNumber = m.group(1)
+    def CheckForMessages(self):
+        line = self.io.readline()  # Check for incoming serial messages
+        # a txt message will look like +CMT: "+19286427892","","14/11/19,00:37:33-28"
+        if line.startswith("+CMT:"):
+            try:
+                #                        number     ""      day   month  year   hour  min     sec
+                m = re.search(br'\+CMT\: \"(\+\d+)\",(.*?),\"(\d+)\/(\d+)\/(\d+),(\d+)\:(\d+)\:(\d+).*', line)
+                phoneNumber = m.group(1)
 
-                    day = int(m.group(5))
-                    month = int(m.group(4))
-                    year = int(m.group(3))
-                    hour = int(m.group(6))
-                    minute = int(m.group(7))
-                    sec = int(m.group(8))
+                day = int(m.group(5))
+                month = int(m.group(4))
+                year = int(m.group(3))
+                hour = int(m.group(6))
+                minute = int(m.group(7))
+                sec = int(m.group(8))
 
-                except Exception as e:
-                    print(f"Malformed message: {line}\n")
+            except Exception as e:
+                print(f"Malformed message: {line}\n")
 
-                try:
-                    # Read the text message.
-                    line = self.io.readline()
-                    # check for UCS2 encoding. Not super robust but should work for the messages we expect in this application.
-                    if re.match(r'^([0-9A-F]{4}){4,}', line):  # a UCS2 message looks like this: 004F006E00200032002000310030
-                        tmp = bytearray.fromhex(line.rstrip()).decode()
-                        # throw away non-printing characters
-                        printable = set(string.printable)
-                        line = filter(lambda x: x in printable, tmp)
-                    
-                    self.ProcessCmd(line, phoneNumber, time.time())
-                    print(f"From {phoneNumber} on: {day}/{month}/{year} at {hour}:{minute}:{sec}")
-                except Exception as e:
-                    print(f"Invalid text msg: {line}")
-                    print(e)
-
-            self.UpdateSwitches()
+            try:
+                # Read the text message.
+                line = self.io.readline()
+                # check for UCS2 encoding. Not super robust but should work for the messages we expect in this application.
+                if re.match(br'^([0-9A-F]{4}){4,}', line):  # a UCS2 message looks like this: 004F006E00200032002000310030
+                    tmp = bytearray.fromhex(line.rstrip()).decode()
+                    # throw away non-printing characters
+                    printable = set(string.printable)
+                    line = filter(lambda x: x in printable, tmp)
+                
+                self.ProcessCmd(line, phoneNumber, time.time())
+                print(f"From {phoneNumber} on: {day}/{month}/{year} at {hour}:{minute}:{sec}")
+            except Exception as e:
+                print(f"Invalid text msg: {line}")
+                print(e)
 
