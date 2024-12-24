@@ -19,8 +19,12 @@ class GsmSwitch:
         self.io = hardwareInterface
         self.gmtOffset = -7
 
-        sensorPresent = True
-        ds18b20Dev = ''
+    # Init the modem as needed for application to function
+    def InitSim7600Modem(self):
+        self.io.write('AT+CMGF=1\r\n')  # set text mode
+        self.WaitResponse('OK')
+        self.io.write('AT+CNMI=2,2,0,0,0\r\n')  # Output texts asynchronously
+        self.WaitResponse('OK')
 
     def WaitResponse(self, msg):
         startTime = time.time()

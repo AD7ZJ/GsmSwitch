@@ -1,9 +1,10 @@
 import serial
 import RPi.GPIO as GPIO
 import time
+import glob
 
 class HwInterface:
-    def setup(self):
+    def __init__(self):
         # set the pins used to control each switch
         self.switch1 = 24
         self.switch2 = 26
@@ -22,10 +23,10 @@ class HwInterface:
         self.port.close()
 
     def readline(self):
-        return self.port.readline()
+        return self.port.readline().decode('ascii')
     
-    def write(self, msg):
-        return self.port.write(msg)
+    def write(self, msg: str):
+        return self.port.write(msg.encode('ascii'))
     
     def SetSwitch1(self, state):
         GPIO.output(self.switch1, state)
