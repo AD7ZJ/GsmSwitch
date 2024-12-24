@@ -220,7 +220,7 @@ class GsmSwitch:
         if line.startswith("+CMT:"):
             try:
                 #                        number     ""      day   month  year   hour  min     sec
-                m = re.search(br'\+CMT\: \"(\+\d+)\",(.*?),\"(\d+)\/(\d+)\/(\d+),(\d+)\:(\d+)\:(\d+).*', line)
+                m = re.search(r'\+CMT\: \"(\+\d+)\",(.*?),\"(\d+)\/(\d+)\/(\d+),(\d+)\:(\d+)\:(\d+).*', line)
                 phoneNumber = m.group(1)
 
                 day = int(m.group(5))
@@ -237,11 +237,10 @@ class GsmSwitch:
                 # Read the text message.
                 line = self.io.readline()
                 # check for UCS2 encoding. Not super robust but should work for the messages we expect in this application.
-                if re.match(br'^([0-9A-F]{4}){4,}', line):  # a UCS2 message looks like this: 004F006E00200032002000310030
+                if re.match(r'^([0-9A-F]{4}){4,}', line):  # a UCS2 message looks like this: 004F006E00200032002000310030
                     tmp = bytearray.fromhex(line.rstrip()).decode()
-                    # throw away non-printing characters
-                    printable = set(string.printable)
-                    line = filter(lambda x: x in printable, tmp)
+                    # Filter out non-printing characters
+                    line = ''.join([char for char in tmp if char in string.printable])
                 
                 self.ProcessCmd(line, phoneNumber, time.time())
                 print(f"From {phoneNumber} on: {day}/{month}/{year} at {hour}:{minute}:{sec}")

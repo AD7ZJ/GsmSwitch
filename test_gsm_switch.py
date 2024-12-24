@@ -234,17 +234,31 @@ class TestGsmSwitch(unittest.TestCase):
         self.assertEqual(io.writeCalls[2], 'RSSI: -78 dBm, BER: 99')
 
 
-    def dtest_check_for_messages(self):
+    def test_check_for_messages(self):
         io = HwInterface()
         switch = GsmSwitch(io)
 
         #prepare modem responses
-        io.readResponses = ['+CMT: "+1234567890","","24/12/23,15:19:39-32"', "status",
+        io.readResponses = ['+CMT: "+1234567890","","24/12/23,15:19:39-32"', "on 1 120",
                             ">", "OK"]
         
         switch.CheckForMessages()
 
+        self.assertEqual(io.writeCalls[1], 'OK, turning sw1 on now for 120 minutes')
+        self.assertAlmostEqual(time.time(), switch.startTime[0], delta=1)
+
+
+    def test_check_for_messages_ucs(self):
+        io = HwInterface()
+        switch = GsmSwitch(io)
+
+        #prepare modem responses. This encodes a 'status' txt messages that's UCS2 encoded
+        io.readResponses = ['+CMT: "+1234567890","","24/12/23,15:19:39-32"', "005300740061007400750073",
+                            ">", "OK"]
         
+        switch.CheckForMessages()
+
+        self.assertEqual(io.writeCalls[1], 'Nothing scheduled for sw1. Nothing scheduled for sw2. ')    
 
 
 if __name__ == "__main__":#
