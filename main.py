@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import signal
 import sys
+import logging
 from hardware import HwInterface
 from gsm_switch import GsmSwitch
 
@@ -10,8 +11,10 @@ from gsm_switch import GsmSwitch
 
 class RpiGsmSwitch:
     def __init__(self): 
-        self.io = HwInterface()
-        self.switch = GsmSwitch(self.io)
+        logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+        self.log = logging.getLogger(__name__)
+        self.io = HwInterface(self.log)
+        self.switch = GsmSwitch(self.io, self.log)
 
         signal.signal(signal.SIGINT, self.sigHandler)
 

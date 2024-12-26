@@ -6,16 +6,14 @@ import string
 import logging
 
 class GsmSwitch:
-    def __init__(self, hardwareInterface):        
+    def __init__(self, hardwareInterface, logger: logging.Logger):        
         # global vars
         self.startTime = [0, 0]
         self.stopTime = [0, 0]
 
         self.io = hardwareInterface
+        self.log = logger
         self.gmtOffset = -7
-
-        logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
-        self.log = logging.getLogger(__name__)
 
     # Init the modem as needed for application to function
     def InitSim7600Modem(self):
