@@ -37,12 +37,6 @@ class HwInterface:
     def DS18B20Init(self):
         global ds18b20Dev
         try:
-            os.system('modprobe w1-gpio')
-            os.system('modprobe w1-therm')
-
-            # give the driver time to scan the bus
-            time.sleep(1)
-
             # device files for DS18B20 sensors always start with 28- and take the form of 28-0000061573fa
             ds18b20DevBaseDir = '/sys/bus/w1/devices/'
             ds18b20DevDir = glob.glob(ds18b20DevBaseDir + '28*')[0]

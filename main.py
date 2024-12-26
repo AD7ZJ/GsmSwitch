@@ -4,6 +4,10 @@ import sys
 from hardware import HwInterface
 from gsm_switch import GsmSwitch
 
+# if you want a 1-wire temp sensor to be detected, add the following lines to /etc/modules
+# w1-gpio
+# w1-therm
+
 class RpiGsmSwitch:
     def __init__(self): 
         self.io = HwInterface()
