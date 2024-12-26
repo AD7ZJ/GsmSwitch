@@ -48,7 +48,7 @@ class HwInterface:
             ds18b20DevDir = glob.glob(ds18b20DevBaseDir + '28*')[0]
             ds18b20Dev = ds18b20DevDir + '/w1_slave'
         except IndexError:
-            print("No sensor detected")
+            self.log.warn("No sensor detected")
             self.sensorPresent = False
 
     def DS18B20ReadRaw(self):

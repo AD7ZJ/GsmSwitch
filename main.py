@@ -11,7 +11,7 @@ from gsm_switch import GsmSwitch
 
 class RpiGsmSwitch:
     def __init__(self): 
-        logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+        logging.basicConfig(format='%(asctime)s -- %(message)s', level=logging.DEBUG)
         self.log = logging.getLogger(__name__)
         self.io = HwInterface(self.log)
         self.switch = GsmSwitch(self.io, self.log)

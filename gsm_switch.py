@@ -17,6 +17,8 @@ class GsmSwitch:
 
     # Init the modem as needed for application to function
     def InitSim7600Modem(self):
+        self.io.write('ATE0\r\n')  # turn off echo output
+        self.WaitResponse('OK')
         self.io.write('AT+CMGF=1\r\n')  # set text mode
         self.WaitResponse('OK')
         self.io.write('AT+CNMI=2,2,0,0,0\r\n')  # Output texts asynchronously
