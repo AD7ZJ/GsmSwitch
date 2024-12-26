@@ -1,14 +1,9 @@
 #!/usr/bin/env python
 import time
 import re
-import signal
-import sys
-import os
-import glob
-import datetime
 import subprocess
 import string
-
+import logging
 
 class GsmSwitch:
     def __init__(self, hardwareInterface):        
@@ -18,6 +13,9 @@ class GsmSwitch:
 
         self.io = hardwareInterface
         self.gmtOffset = -7
+
+        logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+        self.log = logging.getLogger(__name__)
 
     # Init the modem as needed for application to function
     def InitSim7600Modem(self):
@@ -30,19 +28,17 @@ class GsmSwitch:
         startTime = time.time()
         resp = self.io.readline()
         while msg not in resp:
-            print(f"Waiting... {resp}\r\n")
             if time.time() - startTime > 8:
-                print("timed out :(\r\n")
+                self.log.error(f"timed out waiting for: {msg}\r\n")
                 break
             resp = self.io.readline()
-        print(f"Got: {resp}")
 
     def WaitReturnResponse(self, msg):
         startTime = time.time()
         resp = self.io.readline()
         while msg not in resp:
             if time.time() - startTime > 8:
-                print("timed out :(\r\n")
+                self.log.error(f"timed out waiting for: {msg}\r\n")
                 break
             resp = self.io.readline()
         return resp
@@ -235,7 +231,7 @@ class GsmSwitch:
                 sec = int(m.group(8))
 
             except Exception as e:
-                print(f"Malformed message: {line}\n")
+                self.log.error(f"Malformed message: {line}\n")
 
             try:
                 # Read the text message.
@@ -247,8 +243,8 @@ class GsmSwitch:
                     line = ''.join([char for char in tmp if char in string.printable])
                 
                 self.ProcessCmd(line, phoneNumber, time.time())
-                print(f"From {phoneNumber} on: {day}/{month}/{year} at {hour}:{minute}:{sec}")
+                #self.log.info(f"From {phoneNumber} on: {day}/{month}/{year} at {hour}:{minute}:{sec}")
             except Exception as e:
-                print(f"Invalid text msg: {line}")
-                print(e)
+                self.log.error(f"Invalid text msg: {line}")
+                self.log.error(e)
 

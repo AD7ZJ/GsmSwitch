@@ -138,7 +138,6 @@ class TestGsmSwitch(unittest.TestCase):
         # verify it works with binary objects as well (the b)
         switch.ProcessCmd("off 1", "+1234567890", timeNow)
 
-        print(io.writeCalls)
         self.assertEqual(io.writeCalls[1], 'sw1 is already off')
         self.assertEqual(0, switch.startTime[0])
 
