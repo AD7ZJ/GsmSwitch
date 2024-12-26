@@ -26,7 +26,8 @@ class HwInterface:
 
     def readline(self):
         rx = self.port.readline().decode('ascii')
-        self.log.debug(f"RX: {rx}")
+        if rx:
+            self.log.debug(f"RX: {rx}")
         return rx
     
     def write(self, msg: str):
