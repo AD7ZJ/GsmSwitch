@@ -1,11 +1,11 @@
 
 # SMS Controlled Switch using a raspberry pi
 
-This code interacts with a SIM7600 4g module using AT commands over the serial port.  It uses the module to send and receive text messages for the purpose of controlling one more more switches.  I use this to turn a preheater on and off for my airplane, but it probably has other uses too :-) 
+This code interacts with a SIM7600 4g module using AT commands over the serial port.  It uses the module to send and receive text messages for the purpose of controlling one more more switches.  I use this to turn a preheater on and off for my airplane, but it probably has other uses too :-) It started out for a SIM900 module which stopped working when TMobile shut down their 2g network. The AT commands are pretty much the same for both though. 
 
 ## Setup
 
-Install python 3. It will need the following modules intalled as well:
+On a raspian minimal image, install the following modules:
 ```
 apt install python3
 apt install python3-serial
