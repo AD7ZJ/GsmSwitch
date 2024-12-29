@@ -215,6 +215,7 @@ class GsmSwitch:
             self.io.SetSwitch2(False)
 
     def CheckForMessages(self):
+        errMsg = ""
         line = self.io.readline()  # Check for incoming serial messages
         # a txt message will look like +CMT: "+19286427892","","14/11/19,00:37:33-28"
         if line.startswith("+CMT:"):
@@ -230,10 +231,6 @@ class GsmSwitch:
                 minute = int(m.group(7))
                 sec = int(m.group(8))
 
-            except Exception as e:
-                self.log.error(f"Malformed message: {line}\n")
-
-            try:
                 # Read the text message.
                 line = self.io.readline()
                 # check for UCS2 encoding. Not super robust but should work for the messages we expect in this application.
@@ -245,6 +242,8 @@ class GsmSwitch:
                 self.ProcessCmd(line, phoneNumber, time.time())
                 #self.log.info(f"From {phoneNumber} on: {day}/{month}/{year} at {hour}:{minute}:{sec}")
             except Exception as e:
-                self.log.error(f"Invalid text msg: {line}")
-                self.log.error(e)
+                errMsg = f"Invalid text msg: {line} Exception: {str(e)}"
+                self.log.error(errMsg)
+            
+        return errMsg
 

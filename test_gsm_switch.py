@@ -234,6 +234,15 @@ class TestGsmSwitch(unittest.TestCase):
 
         self.assertEqual(self.io.writeCalls[1], 'Nothing scheduled for sw1. Nothing scheduled for sw2. ')    
 
+    def test_check_for_messages_empty(self):
+        #prepare modem responses. This is an empty SMS. 
+        self.io.readResponses = ['+CMT: "128","","24/12/27,08:13:10-32"', "",
+                            ">", "OK"]
+    
+        err = self.switch.CheckForMessages()
+
+        self.assertEqual(err, 'Invalid text msg: +CMT: "128","","24/12/27,08:13:10-32" Exception: \'NoneType\' object has no attribute \'group\'')    
+
 
 if __name__ == "__main__":#
     unittest.main()
