@@ -61,4 +61,61 @@ w1-therm
 ### 4. **Status Command**
 - **Syntax:**  
   `Status`  
-  **Description:** Returns the status of the switches, including whether they are on or scheduled to turn on.  
+  **Description:** Returns the status of the switches, including whether they are on or scheduled to turn on.
+
+
+## Configuring the SIM7600 to connect to the internet
+Create the following file: /etc/ppp/peers/provider
+```
+#
+# This is the default configuration used by pon(1) and poff(1).
+# See the manual page pppd(8) for information on all the options.
+
+#user ""
+noauth
+
+# Serial device to which the modem is connected.
+/dev/ttyUSB2
+
+# Speed of the serial line.
+115200
+
+# Use this connection as the default route.
+defaultroute
+
+# Makes pppd "dial again" when the connection is lost.
+persist
+
+nocrtscts
+debug
+nodetach
+ipcp-accept-local
+ipcp-accept-remote
+
+connect "/usr/sbin/chat -s -v -f /etc/chatscripts/gprs -T fast.t-mobile.com"
+```
+
+Create the following file: /etc/systemd/system/ppp0.service
+```
+[Unit]
+Description=PPP Connection
+After=network.target dev-ttyUSB2.device
+Requires=dev-ttyUSB2.device
+ConditionPathExists=/dev/ttyUSB2
+
+[Service]
+ExecStart=/usr/bin/pon
+ExecStop=/usr/bin/poff
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+```
+
+And then enable/start the service:
+```
+systemctl enable ppp0
+systemctl start ppp0
+
+```
