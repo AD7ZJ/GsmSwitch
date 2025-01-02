@@ -18,7 +18,7 @@ w1-therm
 ```
 
 ## Commands
-
+Commands are not case sensitive. 
 ### 1. **On Command**
 - **Syntax:**  
   `On <switchID> <time> <duration>`  
@@ -49,29 +49,33 @@ w1-therm
   `Off`  
   **Description:** Turns off all switches.  
 
-  **Example:**  
-  `Off`  
-  (Turns all switches off.)
-
-### 3. **Temp Command**
+### 3. **Status Command**
 - **Syntax:**  
-  `Temp`  
-  **Description:** Returns the current temperature as measured by the external DS18B probe.  
-
-### 4. **Status Command**
-- **Syntax:**  
-  `Status`  
+  `status`  
   **Description:** Returns the status of the switches, including whether they are on or scheduled to turn on.
 
+### 4. **Received Signal Strength Indication**
+- **Syntax:**  
+  `rssi`  
+  **Description:** Returns the signal strength as reported by the cellular modem.
+
+### 5. **System Info**
+- **Syntax:**  
+  `system`  
+  **Description:** Returns system info such as uptime and CPU temp.  
+
+### 4. **Temp Command**
+- **Syntax:**  
+  `temp`  
+  **Description:** Returns the current temperature as measured by the external DS18B probe.  
 
 ## Configuring the SIM7600 to connect to the internet
 Create the following file: /etc/ppp/peers/provider
 ```
-#
 # This is the default configuration used by pon(1) and poff(1).
 # See the manual page pppd(8) for information on all the options.
 
-#user ""
+# Do not ask the remote to authenticate.
 noauth
 
 # Serial device to which the modem is connected.
@@ -91,22 +95,23 @@ debug
 nodetach
 ipcp-accept-local
 ipcp-accept-remote
+usepeerdns
 
 connect "/usr/sbin/chat -s -v -f /etc/chatscripts/gprs -T fast.t-mobile.com"
 ```
 
-Create the following file: /etc/systemd/system/ppp0.service
+Create the following file: /etc/systemd/system/ppp0.service  to start the connection automatically on boot. 
 ```
 [Unit]
 Description=PPP Connection
-After=network.target dev-ttyUSB2.device
-Requires=dev-ttyUSB2.device
-ConditionPathExists=/dev/ttyUSB2
+After=network.target 
 
 [Service]
+ExecStartPre=/bin/bash -c 'while [ ! -e /dev/ttyUSB2 ]; do sleep 60; done'
 ExecStart=/usr/bin/pon
 ExecStop=/usr/bin/poff
 Restart=always
+RestartSec=30
 User=root
 
 [Install]
