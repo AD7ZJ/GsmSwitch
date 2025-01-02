@@ -16,7 +16,7 @@ class HwInterface:
 
         self.sensorPresent = True
 
-        GPIO.setmode(GPIO.BOARD)
+        GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.switch1, GPIO.OUT)
         GPIO.setup(self.switch2, GPIO.OUT)
 
